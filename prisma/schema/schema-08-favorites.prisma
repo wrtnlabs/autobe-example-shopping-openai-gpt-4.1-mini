@@ -1,0 +1,123 @@
+/// Stores customer's favorite products by referencing the member user and
+/// the product snapshot at the time of favoriting. Supports soft deletion
+/// with logical deletion timestamp and maintains creation/update audit
+/// timestamps. Ensures uniqueness of favorite by member and product
+/// snapshot.
+///
+/// @namespace Favorites
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_favorite_products {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged customer's {@link shopping_mall_memberusers.id}.
+  shopping_mall_memberuser_id String
+  
+  /// Referenced product snapshot at the time of favoriting {@link
+  /// shopping_mall_sale_snapshots.id}.
+  shopping_mall_sale_snapshot_id String
+  
+  /// Favorite creation timestamp.
+  created_at DateTime
+  
+  /// Favorite last update timestamp.
+  updated_at DateTime
+  
+  /// Favorite logical deletion timestamp for soft delete.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  memberuser shopping_mall_memberusers @relation(fields: [shopping_mall_memberuser_id], references: [id], onDelete: Cascade)
+  saleSnapshot shopping_mall_sale_snapshots @relation(fields: [shopping_mall_sale_snapshot_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_sale_snapshot_id], map: "shopping_mall_favorite_products_shopping_mall_sale_sna_2b541638")
+  
+  @@unique([shopping_mall_memberuser_id, shopping_mall_sale_snapshot_id], map: "shopping_mall_favorite_products_shopping_mall_memberus_f26d9182")
+}
+
+/// Manages customer's favorite inquiries by linking to member users and
+/// inquiry snapshots. Tracks creation, update, and logical deletion times
+/// for proper auditing and personalized data management. Enforces unique
+/// favorite entry per member and inquiry snapshot combination.
+///
+/// @namespace Favorites
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_favorite_inquiries {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged customer's {@link shopping_mall_memberusers.id}.
+  shopping_mall_memberuser_id String
+  
+  /// Referenced inquiry snapshot at favoriting time {@link
+  /// shopping_mall_snapshots.id}.
+  shopping_mall_inquiry_snapshot_id String
+  
+  /// Favorite inquiry creation timestamp.
+  created_at DateTime
+  
+  /// Favorite inquiry last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp for soft delete.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  memberuser shopping_mall_memberusers @relation(fields: [shopping_mall_memberuser_id], references: [id], onDelete: Cascade)
+  inquirySnapshot shopping_mall_snapshots @relation(fields: [shopping_mall_inquiry_snapshot_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_inquiry_snapshot_id], map: "shopping_mall_favorite_inquiries_shopping_mall_inquiry_6596cbb6")
+  
+  @@unique([shopping_mall_memberuser_id, shopping_mall_inquiry_snapshot_id], map: "shopping_mall_favorite_inquiries_shopping_mall_memberu_eacce128")
+}
+
+/// Stores customer's favorite shipping addresses by referencing member users
+/// and address snapshots. Maintains timestamps for creation, updates, and
+/// logical deletion for soft delete capability. Enforces uniqueness of
+/// favorite addresses per member and snapshot pair.
+///
+/// @namespace Favorites
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_favorite_addresses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged customer's {@link shopping_mall_memberusers.id}.
+  shopping_mall_memberuser_id String
+  
+  /// Referenced address snapshot at the time of favoriting {@link
+  /// shopping_mall_snapshots.id}.
+  shopping_mall_snapshot_id String
+  
+  /// Favorite address creation timestamp.
+  created_at DateTime
+  
+  /// Favorite address last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp for soft delete.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  memberuser shopping_mall_memberusers @relation(fields: [shopping_mall_memberuser_id], references: [id], onDelete: Cascade)
+  snapshot shopping_mall_snapshots @relation(fields: [shopping_mall_snapshot_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_snapshot_id])
+  
+  @@unique([shopping_mall_memberuser_id, shopping_mall_snapshot_id], map: "shopping_mall_favorite_addresses_shopping_mall_memberu_411e2c9e")
+}

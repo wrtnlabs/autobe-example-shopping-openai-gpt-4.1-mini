@@ -1,0 +1,176 @@
+/// Represents sales channels through which products are sold, such as
+/// websites, mobile apps, or physical kiosks. Channels organize sales under
+/// distinct business contexts and are configured separately to enable
+/// multi-channel commerce.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_channels {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifying the channel. Used in URL paths and API endpoints.
+  code String
+  
+  /// Human-readable name of the sales channel.
+  name String
+  
+  /// Detailed description of the channel's purpose and characteristics.
+  description String?
+  
+  /// Status of the channel, e.g., active, inactive, pending.
+  status String
+  
+  /// Timestamp when the channel was created.
+  created_at DateTime
+  
+  /// Timestamp when the channel was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the channel was logically deleted (soft delete).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_channel_categories shopping_mall_channel_categories[]
+  shopping_mall_sales shopping_mall_sales[]
+  shopping_mall_orders shopping_mall_orders[]
+  shopping_mall_coupons shopping_mall_coupons[]
+  shopping_mall_inquiries shopping_mall_inquiries[]
+  shopping_mall_reviews shopping_mall_reviews[]
+  
+  @@unique([code])
+  @@index([status, created_at])
+}
+
+/// Defines spatial product groupings similar to store corners, providing a
+/// way to organize products by physical or logical space within channels or
+/// the mall overall.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_sections {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code for identifying the section.
+  code String
+  
+  /// Display name of the section.
+  name String
+  
+  /// Optional detailed description of the section.
+  description String?
+  
+  /// Current status of the section in the system lifecycle.
+  status String
+  
+  /// Timestamp when the section was created.
+  created_at DateTime
+  
+  /// Timestamp when the section was last updated.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_sales shopping_mall_sales[]
+  shopping_mall_orders shopping_mall_orders[]
+  shopping_mall_inquiries shopping_mall_inquiries[]
+  
+  @@unique([code])
+  @@index([status, created_at])
+}
+
+/// Maps hierarchical product categories to specific channels, enabling
+/// channel-customized product classifications and category structures.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_channel_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged sales channel's {@link shopping_mall_channels.id}.
+  shopping_mall_channel_id String
+  
+  /// Belonged product category's {@link shopping_mall_categories.id}.
+  shopping_mall_category_id String
+  
+  /// Timestamp when the channel-category mapping was created.
+  created_at DateTime
+  
+  /// Timestamp when the channel-category mapping was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the mapping was logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  channel shopping_mall_channels @relation(fields: [shopping_mall_channel_id], references: [id], onDelete: Cascade)
+  category shopping_mall_categories @relation(fields: [shopping_mall_category_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_category_id])
+  
+  @@unique([shopping_mall_channel_id, shopping_mall_category_id], map: "shopping_mall_channel_categories_shopping_mall_channel_874e8a13")
+  @@index([shopping_mall_channel_id, created_at], map: "shopping_mall_channel_categories_shopping_mall_channel_383c9ffb")
+}
+
+/// Storage for all attachment files such as images, documents, or multimedia
+/// related to products, posts, and system resources. Supports metadata
+/// management and secure CDN distribution.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_attachments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Stored file name including extension.
+  file_name String
+  
+  /// Publicly accessible URL pointing to the file location, typically via CDN.
+  file_url String
+  
+  /// MIME type of the file, e.g., image/png, application/pdf.
+  media_type String
+  
+  /// Size of the file in bytes.
+  file_size Int
+  
+  /// IP address from which the file was uploaded.
+  upload_ip String?
+  
+  /// Timestamp when the attachment was uploaded.
+  created_at DateTime
+  
+  /// Timestamp when the attachment metadata was last modified.
+  updated_at DateTime
+  
+  /// Timestamp when the attachment was logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([file_url])
+  @@index([media_type, created_at])
+}

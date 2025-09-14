@@ -1,0 +1,135 @@
+/// Stores shopping cart sessions for customers, linked optionally to guest
+/// or member users. Supports cart lifecycle tracking via status, timestamps,
+/// and soft deletion.
+///
+/// @namespace Carts
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_carts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged guest customer's shopping_mall_guestusers.id.
+  guest_user_id String?
+  
+  /// Belonged member customer's shopping_mall_memberusers.id.
+  member_user_id String?
+  
+  /// Cart creation timestamp.
+  created_at DateTime
+  
+  /// Cart last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  /// Current cart status, e.g. active, abandoned, expired.
+  status String
+  
+  //----
+  // RELATIONS
+  //----
+  guestUser shopping_mall_guestusers? @relation(fields: [guest_user_id], references: [id], onDelete: Cascade)
+  memberUser shopping_mall_memberusers? @relation(fields: [member_user_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_cart_items shopping_mall_cart_items[]
+  
+  @@unique([guest_user_id, id])
+  @@unique([member_user_id, id])
+  @@index([guest_user_id, created_at])
+  @@index([member_user_id, created_at])
+}
+
+/// Items that belong to a shopping cart, linked to product snapshots. Tracks
+/// quantity, pricing, status, timestamps, and soft deletion. Subsidiary to
+/// shopping_mall_carts.
+///
+/// @namespace Carts
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_cart_items {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged shopping cart's shopping_mall_carts.id.
+  shopping_cart_id String
+  
+  /// Referenced product snapshot shopping_mall_sale_snapshots.id.
+  shopping_sale_snapshot_id String
+  
+  /// Quantity of the product in the cart item.
+  quantity Int
+  
+  /// Unit price of the product at the time of addition to cart.
+  unit_price Float
+  
+  /// Cart item creation timestamp.
+  created_at DateTime
+  
+  /// Cart item last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if item removed from cart.
+  deleted_at DateTime?
+  
+  /// Status of the cart item, e.g. pending, ordered, cancelled.
+  status String
+  
+  //----
+  // RELATIONS
+  //----
+  shoppingCart shopping_mall_carts @relation(fields: [shopping_cart_id], references: [id], onDelete: Cascade)
+  shoppingSaleSnapshot shopping_mall_sale_snapshots @relation(fields: [shopping_sale_snapshot_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_cart_item_options shopping_mall_cart_item_options[]
+  
+  @@index([shopping_sale_snapshot_id])
+  
+  @@index([shopping_cart_id, created_at])
+}
+
+/// Selected product option details for each cart item unit, linking option
+/// groups and options to enable precise cart item configuration. Subsidiary
+/// to cart items.
+///
+/// @namespace Carts
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_cart_item_options {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged shopping cart item shopping_mall_cart_items.id.
+  shopping_cart_item_id String
+  
+  /// Referenced option group shopping_mall_sale_option_groups.id.
+  shopping_sale_option_group_id String
+  
+  /// Referenced option shopping_mall_sale_options.id.
+  shopping_sale_option_id String
+  
+  /// Option selection creation timestamp.
+  created_at DateTime
+  
+  /// Option selection last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  shoppingCartItem shopping_mall_cart_items @relation(fields: [shopping_cart_item_id], references: [id], onDelete: Cascade)
+  shoppingSaleOptionGroup shopping_mall_sale_option_groups @relation(fields: [shopping_sale_option_group_id], references: [id], onDelete: Cascade)
+  shoppingSaleOption shopping_mall_sale_options @relation(fields: [shopping_sale_option_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_sale_option_group_id], map: "shopping_mall_cart_item_options_shopping_sale_option_g_cc47680b")
+  @@index([shopping_sale_option_id])
+  
+  @@index([shopping_cart_item_id, shopping_sale_option_group_id, shopping_sale_option_id], map: "shopping_mall_cart_item_options_shopping_cart_item_id__ba1711cb")
+}

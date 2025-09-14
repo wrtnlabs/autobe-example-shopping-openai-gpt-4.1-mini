@@ -1,0 +1,285 @@
+/// Customer product inquiries capturing questions and messages related to
+/// products. Supports hierarchical categorization, private posts, and
+/// visibility controls. Linked to members or guests and associated with
+/// channels, sections, and categories for multi-channel management. Tracks
+/// seller responses and inquiry status for workflow management.
+///
+/// @namespace Inquiries
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_inquiries {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated shopping mall sales channel. {@link shopping_mall_channels.id}.
+  shopping_mall_channel_id String
+  
+  /// Associated mall section within channel. {@link shopping_mall_sections.id}.
+  shopping_mall_section_id String?
+  
+  /// Category classification of inquiry. {@link shopping_mall_categories.id}.
+  shopping_mall_category_id String?
+  
+  /// Member user who posted the inquiry, if authenticated. {@link
+  /// shopping_mall_memberusers.id}.
+  shopping_mall_memberuserid String?
+  
+  /// Guest user who posted the inquiry, if unauthenticated. {@link
+  /// shopping_mall_guestusers.id}.
+  shopping_mall_guestuserid String?
+  
+  /// Parent inquiry for hierarchical threading. {@link
+  /// shopping_mall_inquiries.id}.
+  parent_inquiry_id String?
+  
+  /// Title of the inquiry provided by the customer.
+  inquiry_title String
+  
+  /// Detailed message or question content of the inquiry.
+  inquiry_body String
+  
+  /// Whether the inquiry is private and viewable only by authorized roles.
+  is_private Boolean
+  
+  /// Flag indicating if the inquiry has been answered by a seller or admin.
+  is_answered Boolean
+  
+  /// Current status of the inquiry (e.g., 'open', 'closed', 'pending').
+  status String
+  
+  /// Timestamp when the inquiry was created.
+  created_at DateTime
+  
+  /// Timestamp when the inquiry was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if inquiry is logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shoppingMallChannel shopping_mall_channels @relation(fields: [shopping_mall_channel_id], references: [id], onDelete: Cascade)
+  shoppingMallSection shopping_mall_sections? @relation(fields: [shopping_mall_section_id], references: [id], onDelete: Cascade)
+  shoppingMallCategory shopping_mall_categories? @relation(fields: [shopping_mall_category_id], references: [id], onDelete: Cascade)
+  memberUser shopping_mall_memberusers? @relation(fields: [shopping_mall_memberuserid], references: [id], onDelete: Cascade)
+  guestUser shopping_mall_guestusers? @relation(fields: [shopping_mall_guestuserid], references: [id], onDelete: Cascade)
+  parentInquiry shopping_mall_inquiries? @relation("recursive", fields: [parent_inquiry_id], references: [id], onDelete: Cascade)
+  
+  recursive shopping_mall_inquiries[] @relation("recursive")
+  shopping_mall_comments shopping_mall_comments[]
+  shopping_mall_seller_responses shopping_mall_seller_responses[]
+  
+  @@index([shopping_mall_section_id])
+  @@index([shopping_mall_category_id])
+  @@index([shopping_mall_guestuserid])
+  @@index([parent_inquiry_id])
+  
+  @@index([shopping_mall_channel_id, status])
+  @@index([shopping_mall_memberuserid])
+}
+
+/// Product reviews submitted by customers, linked to purchase history for
+/// verification. Supports rating, detailed feedback, privacy settings, and
+/// status tracking. Reviews are tied to channels, categories, and members.
+/// Historical modification tracking through created_at and updated_at
+/// timestamps.
+///
+/// @namespace Inquiries
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_reviews {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Channel through which the review was submitted. {@link
+  /// shopping_mall_channels.id}.
+  shopping_mall_channel_id String
+  
+  /// Category classification of the reviewed product. {@link
+  /// shopping_mall_categories.id}.
+  shopping_mall_category_id String?
+  
+  /// Member user who submitted the review. {@link
+  /// shopping_mall_memberusers.id}.
+  shopping_mall_memberuserid String
+  
+  /// Link to product snapshot representing the purchased product. {@link
+  /// shopping_mall_sale_snapshots.id}.
+  shopping_mall_sale_snapshot_id String
+  
+  /// Title of the product review.
+  review_title String
+  
+  /// Detailed review content provided by the customer.
+  review_body String
+  
+  /// Numerical rating value given by the customer, usually 1-5.
+  rating Int
+  
+  /// Indicates if the review is private and restricted in visibility.
+  is_private Boolean
+  
+  /// Current status of the review (e.g., 'approved', 'pending', 'rejected').
+  status String
+  
+  /// Timestamp when the review was created.
+  created_at DateTime
+  
+  /// Timestamp when the review was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if review is logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shoppingMallChannel shopping_mall_channels @relation(fields: [shopping_mall_channel_id], references: [id], onDelete: Cascade)
+  shoppingMallCategory shopping_mall_categories? @relation(fields: [shopping_mall_category_id], references: [id], onDelete: Cascade)
+  memberUser shopping_mall_memberusers @relation(fields: [shopping_mall_memberuserid], references: [id], onDelete: Cascade)
+  saleSnapshot shopping_mall_sale_snapshots @relation(fields: [shopping_mall_sale_snapshot_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_comments shopping_mall_comments[]
+  shopping_mall_seller_responses shopping_mall_seller_responses[]
+  
+  @@index([shopping_mall_category_id])
+  @@index([shopping_mall_sale_snapshot_id])
+  
+  @@index([shopping_mall_channel_id, status])
+  @@index([shopping_mall_memberuserid])
+}
+
+/// Comments made on inquiries and reviews to support interactive customer
+/// communications. Includes hierarchical reply support, author
+/// identification (members, guests, or sellers), privacy flags, and status
+/// tracking. Comments link to parent posts and support logical deletion with
+/// audit timestamps.
+///
+/// @namespace Inquiries
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_comments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced inquiry for this comment. {@link shopping_mall_inquiries.id}.
+  shopping_mall_inquiry_id String?
+  
+  /// Referenced review for this comment. {@link shopping_mall_reviews.id}.
+  shopping_mall_review_id String?
+  
+  /// Member user who made the comment. {@link shopping_mall_memberusers.id}.
+  shopping_mall_memberuserid String?
+  
+  /// Guest user who made the comment. {@link shopping_mall_guestusers.id}.
+  shopping_mall_guestuserid String?
+  
+  /// Seller user who made the comment if applicable. {@link
+  /// shopping_mall_sellerusers.id}.
+  shopping_mall_selleruserid String?
+  
+  /// Parent comment for nested replies. {@link shopping_mall_comments.id}.
+  parent_comment_id String?
+  
+  /// Content of the comment message.
+  comment_body String
+  
+  /// Indicates if the comment is private.
+  is_private Boolean
+  
+  /// Current status of the comment (e.g., 'visible', 'hidden', 'deleted').
+  status String
+  
+  /// Timestamp when the comment was created.
+  created_at DateTime
+  
+  /// Timestamp when the comment was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for logical deletion of the comment.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  inquiry shopping_mall_inquiries? @relation(fields: [shopping_mall_inquiry_id], references: [id], onDelete: Cascade)
+  review shopping_mall_reviews? @relation(fields: [shopping_mall_review_id], references: [id], onDelete: Cascade)
+  memberUser shopping_mall_memberusers? @relation(fields: [shopping_mall_memberuserid], references: [id], onDelete: Cascade)
+  guestUser shopping_mall_guestusers? @relation(fields: [shopping_mall_guestuserid], references: [id], onDelete: Cascade)
+  sellerUser shopping_mall_sellerusers? @relation(fields: [shopping_mall_selleruserid], references: [id], onDelete: Cascade)
+  parentComment shopping_mall_comments? @relation("recursive", fields: [parent_comment_id], references: [id], onDelete: Cascade)
+  
+  recursive shopping_mall_comments[] @relation("recursive")
+  
+  @@index([shopping_mall_guestuserid])
+  @@index([shopping_mall_selleruserid])
+  @@index([parent_comment_id])
+  
+  @@index([shopping_mall_inquiry_id])
+  @@index([shopping_mall_review_id])
+  @@index([shopping_mall_memberuserid])
+}
+
+/// Official seller responses to customer inquiries or reviews. Supports
+/// status tracking, visibility control, and logical deletion. Linked to the
+/// seller user who authored the response and the related inquiry or review.
+/// Enables clear communication between sellers and customers.
+///
+/// @namespace Inquiries
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_seller_responses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the inquiry this response addresses. {@link
+  /// shopping_mall_inquiries.id}.
+  shopping_mall_inquiry_id String?
+  
+  /// Reference to the review this response addresses. {@link
+  /// shopping_mall_reviews.id}.
+  shopping_mall_review_id String?
+  
+  /// Seller user who authored the response. {@link
+  /// shopping_mall_sellerusers.id}.
+  shopping_mall_selleruserid String
+  
+  /// Content of the seller's response message.
+  response_body String
+  
+  /// Indicates if the response is private and not publicly visible.
+  is_private Boolean
+  
+  /// Current status of the response (e.g., 'published', 'draft', 'deleted').
+  status String
+  
+  /// Timestamp when the response was created.
+  created_at DateTime
+  
+  /// Timestamp when the response was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for logical deletion of the response.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  inquiry shopping_mall_inquiries? @relation(fields: [shopping_mall_inquiry_id], references: [id], onDelete: Cascade)
+  review shopping_mall_reviews? @relation(fields: [shopping_mall_review_id], references: [id], onDelete: Cascade)
+  sellerUser shopping_mall_sellerusers @relation(fields: [shopping_mall_selleruserid], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_inquiry_id])
+  @@index([shopping_mall_review_id])
+  
+  @@index([shopping_mall_selleruserid, status], map: "shopping_mall_seller_responses_shopping_mall_selleruse_4df2117b")
+}

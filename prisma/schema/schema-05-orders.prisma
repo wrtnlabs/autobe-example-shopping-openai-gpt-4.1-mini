@@ -1,0 +1,211 @@
+/// Represents customer orders within the shopping mall system, capturing
+/// order details and lifecycle. Each order is linked to a member user who
+/// placed it and to the channel and section through which it was made. The
+/// model tracks order status, payment status, total price, and timestamps.
+/// Supports soft deletion and audit trails via timestamps.
+///
+/// @namespace Orders
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_orders {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged member user who placed the order. {@link
+  /// shopping_mall_memberusers.id}.
+  shopping_mall_memberuser_id String
+  
+  /// Sales channel through which the order was placed. {@link
+  /// shopping_mall_channels.id}.
+  shopping_mall_channel_id String
+  
+  /// Section representing spatial grouping of the order. {@link
+  /// shopping_mall_sections.id}.
+  shopping_mall_section_id String?
+  
+  /// Unique business identifier for the order.
+  order_code String
+  
+  /// Current status of the order such as 'pending', 'confirmed', 'shipped',
+  /// 'delivered', 'cancelled'.
+  order_status String
+  
+  /// Current status of payment such as 'pending', 'paid', 'cancelled'.
+  payment_status String
+  
+  /// Total price of the order including all items and discounts.
+  total_price Float
+  
+  /// Timestamp for when the order was created.
+  created_at DateTime
+  
+  /// Timestamp for when the order was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  memberUser shopping_mall_memberusers @relation(fields: [shopping_mall_memberuser_id], references: [id], onDelete: Cascade)
+  channel shopping_mall_channels @relation(fields: [shopping_mall_channel_id], references: [id], onDelete: Cascade)
+  section shopping_mall_sections? @relation(fields: [shopping_mall_section_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_order_items shopping_mall_order_items[]
+  shopping_mall_payments shopping_mall_payments[]
+  shopping_mall_deliveries shopping_mall_deliveries[]
+  shopping_mall_order_audit_logs shopping_mall_order_audit_logs[]
+  shopping_mall_order_status_histories shopping_mall_order_status_histories[]
+  shopping_mall_fraud_detections shopping_mall_fraud_detections[]
+  
+  @@index([shopping_mall_section_id])
+  
+  @@unique([order_code])
+  @@index([shopping_mall_memberuser_id, created_at])
+  @@index([shopping_mall_channel_id, created_at])
+}
+
+/// Order items belonging to a specific shopping mall order. Each item
+/// references the product sale snapshot for consistency and tracks quantity,
+/// price, and status. This supporting entity enables detailed management of
+/// individual order contents, including returns and exchanges.
+///
+/// @namespace Orders
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_order_items {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged order for this item. {@link shopping_mall_orders.id}.
+  shopping_mall_order_id String
+  
+  /// Referenced sale snapshot for the product in this order item. {@link
+  /// shopping_mall_sale_snapshots.id}.
+  shopping_mall_sale_snapshot_id String
+  
+  /// Quantity ordered of this product item.
+  quantity Int
+  
+  /// Price per unit of the product item at order time.
+  price Float
+  
+  /// Current status of this order item such as 'pending', 'shipped',
+  /// 'returned'.
+  order_item_status String
+  
+  /// Timestamp when this order item was created.
+  created_at DateTime
+  
+  /// Timestamp when this order item was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  order shopping_mall_orders @relation(fields: [shopping_mall_order_id], references: [id], onDelete: Cascade)
+  saleSnapshot shopping_mall_sale_snapshots @relation(fields: [shopping_mall_sale_snapshot_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_sale_snapshot_id])
+  
+  @@index([shopping_mall_order_id])
+}
+
+/// Payments applied for orders within the shopping mall system. This entity
+/// tracks payment status, associated order, payment method, amount,
+/// transaction details, and timestamps. Supports payment cancellation and
+/// asynchronous confirmation.
+///
+/// @namespace Orders
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_payments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Order to which this payment applies. {@link shopping_mall_orders.id}.
+  shopping_mall_order_id String
+  
+  /// Method of payment such as 'credit_card', 'bank_transfer',
+  /// 'virtual_account'.
+  payment_method String
+  
+  /// Status of payment including 'pending', 'confirmed', 'cancelled', 'failed'.
+  payment_status String
+  
+  /// Amount paid in this payment application.
+  payment_amount Float
+  
+  /// External transaction reference identifier.
+  transaction_id String?
+  
+  /// Timestamp when payment was created.
+  created_at DateTime
+  
+  /// Timestamp when payment was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the payment was cancelled; null if not cancelled.
+  cancelled_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  order shopping_mall_orders @relation(fields: [shopping_mall_order_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_order_id])
+}
+
+/// Delivery tracking information for orders including shipment statuses,
+/// delivery stages, expected dates, and timestamps. Supports partial and
+/// multi-stage shipments.
+///
+/// @namespace Orders
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_deliveries {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Order to which this delivery belongs. {@link shopping_mall_orders.id}.
+  shopping_mall_order_id String
+  
+  /// Current status of delivery such as 'preparing', 'shipping', 'delivered',
+  /// 'exception'.
+  delivery_status String
+  
+  /// Stage of delivery process including 'preparation', 'manufacturing',
+  /// 'shipping', 'completed'.
+  delivery_stage String
+  
+  /// Expected date/time for delivery completion.
+  expected_delivery_date DateTime?
+  
+  /// Timestamp when this delivery stage started.
+  start_time DateTime?
+  
+  /// Timestamp when this delivery stage ended.
+  end_time DateTime?
+  
+  /// Timestamp when this delivery record was created.
+  created_at DateTime
+  
+  /// Timestamp when this delivery record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  order shopping_mall_orders @relation(fields: [shopping_mall_order_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_order_id])
+}

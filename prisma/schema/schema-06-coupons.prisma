@@ -1,0 +1,393 @@
+/// Business coupons issued in the shopping mall system for discounts and
+/// promotions. These represent master records defining coupon properties,
+/// issuance conditions, usage limits, validity periods, and channel
+/// restrictions. Coupons are managed independently and drive promotional
+/// campaigns across multiple channels and products.
+///
+/// @namespace Coupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_coupons {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged channel's {@link shopping_mall_channels.id}.
+  shopping_mall_channel_id String
+  
+  /// Unique code identifier for the coupon.
+  coupon_code String
+  
+  /// Name of the coupon for display purposes.
+  coupon_name String
+  
+  /// Detailed descriptive information about the coupon's purpose.
+  coupon_description String?
+  
+  /// Type of discount (amount, percentage).
+  discount_type String
+  
+  /// Value of the discount either as amount or percentage.
+  discount_value Float
+  
+  /// Maximum discount amount allowed for this coupon.
+  max_discount_amount Float?
+  
+  /// Minimum order amount required to apply this coupon.
+  min_order_amount Float?
+  
+  /// Maximum number of times this coupon can be used across all customers.
+  usage_limit Int?
+  
+  /// Maximum number of times this coupon can be used by one customer.
+  per_customer_limit Int?
+  
+  /// Start date and time of coupon validity period.
+  start_date DateTime
+  
+  /// End date and time of coupon validity period.
+  end_date DateTime
+  
+  /// Status of the coupon, e.g. active, paused, expired.
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp for soft delete.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  channel shopping_mall_channels @relation(fields: [shopping_mall_channel_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_coupon_conditions shopping_mall_coupon_conditions[]
+  shopping_mall_coupon_tickets shopping_mall_coupon_tickets[]
+  
+  @@unique([coupon_code])
+  @@index([shopping_mall_channel_id, status, start_date], map: "shopping_mall_coupons_shopping_mall_channel_id_status__ada2cb2b")
+}
+
+/// Conditions specifying the applicability and constraints of coupons. These
+/// subsidiary entries control which products, sections, or categories a
+/// coupon can be applied to, including inclusion or exclusion rules. Managed
+/// through coupon entity lifecycle.
+///
+/// @namespace Coupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_coupon_conditions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Related coupon's {@link shopping_mall_coupons.id}.
+  shopping_mall_coupon_id String
+  
+  /// Type of condition (include, exclude, etc.).
+  condition_type String
+  
+  /// Target product's {@link shopping_mall_sales.id}, nullable if condition
+  /// relates to other dimension.
+  product_id String?
+  
+  /// Target section's {@link shopping_mall_sections.id}, nullable if condition
+  /// relates to other dimension.
+  section_id String?
+  
+  /// Target category's {@link shopping_mall_categories.id}, nullable if
+  /// condition relates to other dimension.
+  category_id String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  coupon shopping_mall_coupons @relation(fields: [shopping_mall_coupon_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_coupon_id, condition_type], map: "shopping_mall_coupon_conditions_shopping_mall_coupon_i_18ff586d")
+}
+
+/// Individual coupon ticket records assigned to customers. These represent
+/// issued coupon instances with their own validity, usage status, and
+/// linkage to customers and coupons. Tickets enable tracking of coupon usage
+/// per customer independent of the global coupon usage.
+///
+/// @namespace Coupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_coupon_tickets {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated coupon's {@link shopping_mall_coupons.id}.
+  shopping_mall_coupon_id String
+  
+  /// Owner guest user's {@link shopping_mall_guestusers.id}, nullable for
+  /// member/seller/admin ownership.
+  guestuser_id String?
+  
+  /// Owner member user's {@link shopping_mall_memberusers.id}, nullable for
+  /// guest/seller/admin ownership.
+  memberuser_id String?
+  
+  /// Owner seller user's {@link shopping_mall_sellerusers.id}, nullable for
+  /// guest/member/admin ownership.
+  selleruser_id String?
+  
+  /// Owner admin user's {@link shopping_mall_adminusers.id}, nullable for
+  /// guest/member/seller ownership.
+  adminuser_id String?
+  
+  /// Unique code for this coupon ticket.
+  ticket_code String
+  
+  /// Start datetime for the ticket's validity.
+  valid_from DateTime
+  
+  /// End datetime for the ticket validity.
+  valid_until DateTime
+  
+  /// Current usage status of the ticket (unused, used, expired).
+  usage_status String
+  
+  /// Datetime when ticket was used, nullable if unused.
+  used_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  coupon shopping_mall_coupons @relation(fields: [shopping_mall_coupon_id], references: [id], onDelete: Cascade)
+  guestuser shopping_mall_guestusers? @relation(fields: [guestuser_id], references: [id], onDelete: Cascade)
+  memberuser shopping_mall_memberusers? @relation(fields: [memberuser_id], references: [id], onDelete: Cascade)
+  selleruser shopping_mall_sellerusers? @relation(fields: [selleruser_id], references: [id], onDelete: Cascade)
+  adminuser shopping_mall_adminusers? @relation(fields: [adminuser_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_coupon_logs shopping_mall_coupon_logs[]
+  
+  @@index([guestuser_id])
+  @@index([memberuser_id])
+  @@index([selleruser_id])
+  @@index([adminuser_id])
+  
+  @@unique([ticket_code])
+  @@index([shopping_mall_coupon_id, usage_status], map: "shopping_mall_coupon_tickets_shopping_mall_coupon_id_u_8ff9213c")
+}
+
+/// Deposit records representing monetary value held in customer deposit
+/// accounts. Includes metadata about the deposit period, usage, and related
+/// customers (guests or members). These records track deposit lifecycle and
+/// balance management.
+///
+/// @namespace Coupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_deposits {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked guest user's {@link shopping_mall_guestusers.id}, nullable for
+  /// member owners.
+  guestuser_id String?
+  
+  /// Linked member user's {@link shopping_mall_memberusers.id}, nullable for
+  /// guest owners.
+  memberuser_id String?
+  
+  /// Total deposit amount held in the account.
+  deposit_amount Float
+  
+  /// Current usable balance for transactions.
+  usable_balance Float
+  
+  /// Start datetime of deposit validity period.
+  deposit_start_at DateTime
+  
+  /// End datetime of deposit validity period.
+  deposit_end_at DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  guestuser shopping_mall_guestusers? @relation(fields: [guestuser_id], references: [id], onDelete: Cascade)
+  memberuser shopping_mall_memberusers? @relation(fields: [memberuser_id], references: [id], onDelete: Cascade)
+  
+  @@index([memberuser_id])
+  
+  @@index([guestuser_id, memberuser_id])
+}
+
+/// Records of deposit charging applications including payment details,
+/// status, and audit trails. Tracks the lifecycle of deposit charging
+/// operations including approval, cancellation, and failure for guests and
+/// members.
+///
+/// @namespace Coupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_deposit_charges {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked guest user's {@link shopping_mall_guestusers.id}, nullable for
+  /// member owners.
+  guestuser_id String?
+  
+  /// Linked member user's {@link shopping_mall_memberusers.id}, nullable for
+  /// guest owners.
+  memberuser_id String?
+  
+  /// Amount requested for deposit charging.
+  charge_amount Float
+  
+  /// Current status of the charge (pending, approved, cancelled, failed).
+  charge_status String
+  
+  /// Name of the payment provider used.
+  payment_provider String
+  
+  /// Payment account or reference identifier.
+  payment_account String
+  
+  /// Datetime when payment was completed, nullable if unpaid.
+  paid_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  guestuser shopping_mall_guestusers? @relation(fields: [guestuser_id], references: [id], onDelete: Cascade)
+  memberuser shopping_mall_memberusers? @relation(fields: [memberuser_id], references: [id], onDelete: Cascade)
+  
+  @@index([memberuser_id])
+  
+  @@index([guestuser_id, memberuser_id, charge_status], map: "shopping_mall_deposit_charges_guestuser_id_memberuser__39344ab7")
+}
+
+/// Mileage point records recording earning and usage for customers. Tracks
+/// mileage balances and usage history linked to guests and members.
+///
+/// @namespace Coupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_mileages {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Guest user owner {@link shopping_mall_guestusers.id}, nullable for member
+  /// owners.
+  guestuser_id String?
+  
+  /// Member user owner {@link shopping_mall_memberusers.id}, nullable for
+  /// guest owners.
+  memberuser_id String?
+  
+  /// Current mileage point balance.
+  mileage_balance Float
+  
+  /// Total mileage income points.
+  mileage_income Float
+  
+  /// Total mileage used points.
+  mileage_outcome Float
+  
+  /// Mileage points expired and deducted.
+  mileage_expired Float
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  guestuser shopping_mall_guestusers? @relation(fields: [guestuser_id], references: [id], onDelete: Cascade)
+  memberuser shopping_mall_memberusers? @relation(fields: [memberuser_id], references: [id], onDelete: Cascade)
+  
+  @@index([memberuser_id])
+  
+  @@index([guestuser_id, memberuser_id])
+}
+
+/// Mileage donations made by administrators to customers as promotional
+/// campaign bonuses or compensation. Records reason, amount, and donation
+/// metadata for audit and reporting.
+///
+/// @namespace Coupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_mileage_donations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Admin user donor {@link shopping_mall_adminusers.id}.
+  adminuser_id String
+  
+  /// Member user beneficiary {@link shopping_mall_memberusers.id}.
+  memberuser_id String
+  
+  /// Reason for the mileage donation.
+  donation_reason String
+  
+  /// Amount of mileage donated.
+  donation_amount Float
+  
+  /// Date and time of the donation.
+  donation_date DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  adminuser shopping_mall_adminusers @relation(fields: [adminuser_id], references: [id], onDelete: Cascade)
+  memberuser shopping_mall_memberusers @relation(fields: [memberuser_id], references: [id], onDelete: Cascade)
+  
+  @@index([memberuser_id])
+  
+  @@index([adminuser_id, memberuser_id, donation_date], map: "shopping_mall_mileage_donations_adminuser_id_memberuse_2f9c287d")
+}

@@ -1,0 +1,195 @@
+/// Stores immutable historical snapshots of various shopping mall entities
+/// to preserve the state at specific points in time for audit, rollback, and
+/// compliance purposes.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Specifies the type of the entity being snapshotted (such as 'order',
+  /// 'product').
+  entity_type String
+  
+  /// References the unique identifier of the entity instance the snapshot
+  /// belongs to.
+  entity_id String
+  
+  /// JSON string containing the complete snapshot data of the entity state.
+  snapshot_data String
+  
+  /// The timestamp when this snapshot was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_favorite_inquiries shopping_mall_favorite_inquiries[]
+  shopping_mall_favorite_addresses shopping_mall_favorite_addresses[]
+  
+  @@unique([entity_type, entity_id, created_at])
+  @@index([entity_id, created_at])
+}
+
+/// Captures detailed audit trails for order-related events, recording
+/// actions performed by users or system processes for traceability and
+/// accountability.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_order_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced order ID. {@link shopping_mall_orders.id}
+  shopping_mall_order_id String
+  
+  /// UUID of the user who performed the action, if applicable. {@link
+  /// shopping_mall_memberusers.id}, {@link shopping_mall_sellerusers.id}, or
+  /// {@link shopping_mall_adminusers.id}
+  actor_user_id String?
+  
+  /// Description of the action performed on the order.
+  action String
+  
+  /// Additional JSON or text details about the action.
+  action_details String?
+  
+  /// Timestamp when the action was performed.
+  performed_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  order shopping_mall_orders @relation(fields: [shopping_mall_order_id], references: [id], onDelete: Cascade)
+  actorUser shopping_mall_memberusers? @relation(fields: [actor_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([actor_user_id])
+  
+  @@index([shopping_mall_order_id, performed_at], map: "shopping_mall_order_audit_logs_shopping_mall_order_id__dd9164b6")
+}
+
+/// Records inventory changes with detailed information about stock
+/// adjustments and actors responsible for the changes to maintain stock
+/// consistency and audit compliance.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_inventory_audit {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the inventory item changed. {@link
+  /// shopping_mall_inventory.id}
+  inventory_id String
+  
+  /// User or system actor who caused the inventory change. {@link
+  /// shopping_mall_memberusers.id}, {@link shopping_mall_sellerusers.id}, or
+  /// {@link shopping_mall_adminusers.id}
+  actor_user_id String?
+  
+  /// Type of inventory change such as 'addition', 'subtraction', or
+  /// 'adjustment'.
+  change_type String
+  
+  /// Quantity by which the inventory changed; positive or negative.
+  quantity_changed Int
+  
+  /// Optional textual reason for the inventory change.
+  change_reason String?
+  
+  /// Timestamp when the inventory change was recorded.
+  changed_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  inventory shopping_mall_inventory @relation(fields: [inventory_id], references: [id], onDelete: Cascade)
+  actorUser shopping_mall_memberusers? @relation(fields: [actor_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([actor_user_id])
+  
+  @@index([inventory_id, changed_at])
+}
+
+/// Logs coupon-related activities, including issuance, redemption, and
+/// expiration events to support compliance and analytics.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_coupon_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the issued coupon ticket. {@link
+  /// shopping_mall_coupon_tickets.id}
+  shopping_mall_coupon_ticket_id String
+  
+  /// Customer who used the coupon, if applicable. {@link
+  /// shopping_mall_memberusers.id} or {@link shopping_mall_guestusers.id}
+  used_by_customer_id String?
+  
+  /// Type of log entry such as 'issuance', 'usage', or 'expiry'.
+  log_type String
+  
+  /// Additional log information in JSON or textual format.
+  log_data String?
+  
+  /// Timestamp when the log entry was created.
+  logged_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  couponTicket shopping_mall_coupon_tickets @relation(fields: [shopping_mall_coupon_ticket_id], references: [id], onDelete: Cascade)
+  usedByCustomer shopping_mall_memberusers? @relation(fields: [used_by_customer_id], references: [id], onDelete: Cascade)
+  
+  @@index([used_by_customer_id])
+  
+  @@index([shopping_mall_coupon_ticket_id, logged_at], map: "shopping_mall_coupon_logs_shopping_mall_coupon_ticket__07b586d3")
+}
+
+/// Tracks the history of order status changes, including old and new status
+/// with timestamps for monitoring order progress and auditing.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_order_status_histories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the order. {@link shopping_mall_orders.id}
+  shopping_mall_order_id String
+  
+  /// Order status before transition.
+  old_status String
+  
+  /// Order status after transition.
+  new_status String
+  
+  /// Timestamp when the status change occurred.
+  changed_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  order shopping_mall_orders @relation(fields: [shopping_mall_order_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_order_id, changed_at], map: "shopping_mall_order_status_histories_shopping_mall_ord_bebc7242")
+}

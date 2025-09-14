@@ -1,0 +1,224 @@
+/// Guest user connections to the shopping mall, tracking non-member visitor
+/// information per session without authentication credentials. Used for
+/// anonymous browsing and session-based identification.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_guestusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// IP address of the guest user connection.
+  ip_address String
+  
+  /// The access URL the guest used to arrive at the mall.
+  access_url String
+  
+  /// HTTP referrer URL if available.
+  referrer String?
+  
+  /// User-Agent string from the guest browser.
+  user_agent String?
+  
+  /// Timestamp when the guest session started.
+  session_start_at DateTime
+  
+  /// Timestamp when the guest session ended or expired.
+  session_end_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp when guest record was logically deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_carts shopping_mall_carts[]
+  shopping_mall_coupon_tickets shopping_mall_coupon_tickets[]
+  shopping_mall_deposits shopping_mall_deposits[]
+  shopping_mall_deposit_charges shopping_mall_deposit_charges[]
+  shopping_mall_mileages shopping_mall_mileages[]
+  shopping_mall_inquiries shopping_mall_inquiries[]
+  shopping_mall_comments shopping_mall_comments[]
+  
+  @@index([ip_address, session_start_at])
+}
+
+/// Member user information representing registered customers with
+/// authentication credentials, profile data, and account status. Members can
+/// make purchases, manage orders, and participate in reviews.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_memberusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Member's unique email address used for login and communication.
+  email String
+  
+  /// Hashed password for member authentication.
+  password_hash String
+  
+  /// Nickname chosen by the member for display.
+  nickname String
+  
+  /// Full name of the member for official documentation.
+  full_name String
+  
+  /// Contact phone number of the member.
+  phone_number String?
+  
+  /// Current status or lifecycle state of the member account (e.g., active,
+  /// suspended, closed).
+  status String
+  
+  /// Account creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp when member account was logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_carts shopping_mall_carts[]
+  shopping_mall_orders shopping_mall_orders[]
+  shopping_mall_coupon_tickets shopping_mall_coupon_tickets[]
+  shopping_mall_deposits shopping_mall_deposits[]
+  shopping_mall_deposit_charges shopping_mall_deposit_charges[]
+  shopping_mall_mileages shopping_mall_mileages[]
+  shopping_mall_mileage_donations shopping_mall_mileage_donations[]
+  shopping_mall_inquiries shopping_mall_inquiries[]
+  shopping_mall_reviews shopping_mall_reviews[]
+  shopping_mall_comments shopping_mall_comments[]
+  shopping_mall_favorite_products shopping_mall_favorite_products[]
+  shopping_mall_favorite_inquiries shopping_mall_favorite_inquiries[]
+  shopping_mall_favorite_addresses shopping_mall_favorite_addresses[]
+  shopping_mall_order_audit_logs shopping_mall_order_audit_logs[]
+  shopping_mall_inventory_audit shopping_mall_inventory_audit[]
+  shopping_mall_coupon_logs shopping_mall_coupon_logs[]
+  shopping_mall_fraud_detections shopping_mall_fraud_detections[]
+  shopping_mall_sentiment_analysis shopping_mall_sentiment_analysis[]
+  
+  @@unique([email])
+  @@index([status])
+}
+
+/// Seller user information representing members who have permissions to
+/// register products and manage sales. Sellers have extended profile and
+/// status fields reflecting their seller lifecycle state.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_sellerusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Seller's unique email address used for login and communication.
+  email String
+  
+  /// Hashed password for seller authentication.
+  password_hash String
+  
+  /// Nickname chosen by the seller for public display.
+  nickname String
+  
+  /// Full name of the seller for official documentation.
+  full_name String
+  
+  /// Contact phone number of the seller.
+  phone_number String?
+  
+  /// Current lifecycle status of the seller account (e.g., active, pending,
+  /// suspended).
+  status String
+  
+  /// Official business registration number for the seller.
+  business_registration_number String
+  
+  /// Account creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp when seller account was logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_sales shopping_mall_sales[]
+  shopping_mall_coupon_tickets shopping_mall_coupon_tickets[]
+  shopping_mall_comments shopping_mall_comments[]
+  shopping_mall_seller_responses shopping_mall_seller_responses[]
+  
+  @@unique([email])
+  @@unique([business_registration_number])
+  @@index([status])
+}
+
+/// System administrator user information with full access and elevated
+/// privileges to manage the shopping mall backend platform. Includes
+/// authentication credentials and status tracking.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_adminusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator's unique email address for login.
+  email String
+  
+  /// Hashed password for administrator authentication.
+  password_hash String
+  
+  /// Display nickname for the administrator.
+  nickname String
+  
+  /// Full legal name of the administrator.
+  full_name String
+  
+  /// Current administrator account status (e.g., active, suspended).
+  status String
+  
+  /// Account creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp when administrator account was logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_coupon_tickets shopping_mall_coupon_tickets[]
+  shopping_mall_mileage_donations shopping_mall_mileage_donations[]
+  
+  @@unique([email])
+  @@index([status])
+}

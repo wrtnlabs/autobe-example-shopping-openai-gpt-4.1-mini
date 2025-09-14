@@ -1,0 +1,409 @@
+/// Business entity representing products for sale in the shopping mall. This
+/// primary table stores essential product details, status, seller
+/// references, and pricing information. It relates to sales snapshots for
+/// history preservation and connects with categories and inventory
+/// management tables.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_sales {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged channel's {\@link shopping_mall_channels.id}.
+  shopping_mall_channel_id String
+  
+  /// Belonged section's {\@link shopping_mall_sections.id}.
+  shopping_mall_section_id String?
+  
+  /// Belonged seller user's {@link shopping_mall_sellerusers.id}.
+  shopping_mall_seller_user_id String
+  
+  /// Unique product code for business identification.
+  code String
+  
+  /// Product status indicating lifecycle state such as active, paused, or
+  /// discontinued.
+  status String
+  
+  /// Product name/title.
+  name String
+  
+  /// Detailed product description.
+  description String?
+  
+  /// Base price of the product.
+  price Float
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp for soft delete.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  channel shopping_mall_channels @relation(fields: [shopping_mall_channel_id], references: [id], onDelete: Cascade)
+  section shopping_mall_sections? @relation(fields: [shopping_mall_section_id], references: [id], onDelete: Cascade)
+  sellerUser shopping_mall_sellerusers @relation(fields: [shopping_mall_seller_user_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_sale_snapshots shopping_mall_sale_snapshots[]
+  shopping_mall_sale_units shopping_mall_sale_units[]
+  shopping_mall_inventory shopping_mall_inventory[]
+  shopping_mall_sentiment_analysis shopping_mall_sentiment_analysis[]
+  
+  @@index([shopping_mall_section_id])
+  @@index([shopping_mall_seller_user_id])
+  
+  @@unique([code])
+  @@index([shopping_mall_channel_id, status])
+}
+
+/// Snapshot table preserving historical states of shopping mall sales
+/// products for audit and rollback purposes. Each snapshot captures the
+/// entire product state at a point in time.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_sale_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced product's {@link shopping_mall_sales.id}.
+  shopping_mall_sale_id String
+  
+  /// Captured product code at snapshot time.
+  code String
+  
+  /// Captured product status at snapshot time.
+  status String
+  
+  /// Captured product name/title at snapshot time.
+  name String
+  
+  /// Captured detailed product description at snapshot time.
+  description String?
+  
+  /// Captured product base price at snapshot time.
+  price Float
+  
+  /// Creation timestamp of the snapshot record.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  sale shopping_mall_sales @relation(fields: [shopping_mall_sale_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_cart_items shopping_mall_cart_items[]
+  shopping_mall_order_items shopping_mall_order_items[]
+  shopping_mall_reviews shopping_mall_reviews[]
+  shopping_mall_favorite_products shopping_mall_favorite_products[]
+  
+  @@index([shopping_mall_sale_id, created_at], map: "shopping_mall_sale_snapshots_shopping_mall_sale_id_cre_36e298a1")
+}
+
+/// Subsidiary entity representing units or components composing sales
+/// products. It supports composition and inventory management at a finer
+/// granularity.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_sale_units {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged product {@link shopping_mall_sales.id}.
+  shopping_mall_sale_id String
+  
+  /// Unit code used for identification under the product.
+  code String
+  
+  /// Unit name/title.
+  name String
+  
+  /// Detailed description of the unit.
+  description String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  sale shopping_mall_sales @relation(fields: [shopping_mall_sale_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_sale_unit_options shopping_mall_sale_unit_options[]
+  
+  @@unique([shopping_mall_sale_id, code])
+}
+
+/// Subsidiary table representing options applied to specific sale units. It
+/// links unit option selections to sale units for detailed configuration.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_sale_unit_options {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged sale unit {@link shopping_mall_sale_units.id}.
+  shopping_mall_sale_unit_id String
+  
+  /// Applied sale option {@link shopping_mall_sale_options.id}.
+  shopping_mall_sale_option_id String
+  
+  /// Additional price added by this option.
+  additional_price Float
+  
+  /// Inventory stock quantity for this option unit.
+  stock_quantity Int
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  saleUnit shopping_mall_sale_units @relation(fields: [shopping_mall_sale_unit_id], references: [id], onDelete: Cascade)
+  saleOption shopping_mall_sale_options @relation(fields: [shopping_mall_sale_option_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_mall_sale_option_id], map: "shopping_mall_sale_unit_options_shopping_mall_sale_opt_db2f306e")
+  
+  @@unique([shopping_mall_sale_unit_id, shopping_mall_sale_option_id], map: "shopping_mall_sale_unit_options_shopping_mall_sale_uni_167c8d7f")
+}
+
+/// Primary entity defining possible sale options applicable across products.
+/// Supports distinct option groups and value selections.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_sale_options {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged option group {@link shopping_mall_sale_option_groups.id}.
+  shopping_mall_sale_option_group_id String
+  
+  /// Unique code identifying the sale option.
+  code String
+  
+  /// Descriptive name of the sale option.
+  name String
+  
+  /// Type of the option (e.g., selection, boolean).
+  type String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  saleOptionGroup shopping_mall_sale_option_groups @relation(fields: [shopping_mall_sale_option_group_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_sale_unit_options shopping_mall_sale_unit_options[]
+  shopping_mall_cart_item_options shopping_mall_cart_item_options[]
+  
+  @@unique([code])
+  @@index([shopping_mall_sale_option_group_id], map: "shopping_mall_sale_options_shopping_mall_sale_option_g_dd8bbfd0")
+}
+
+/// Primary entity representing groups of sale options, enabling modular
+/// configuration of product option sets.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_sale_option_groups {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code for the option group.
+  code String
+  
+  /// Name of the option group.
+  name String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_sale_options shopping_mall_sale_options[]
+  shopping_mall_cart_item_options shopping_mall_cart_item_options[]
+  
+  @@unique([code])
+}
+
+/// Primary entity managing inventory counts for product option combinations.
+/// Links sales products and option selections with stock data.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_inventory {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated product {@link shopping_mall_sales.id}.
+  shopping_mall_sale_id String
+  
+  /// Code representing the combination of options this inventory record
+  /// applies to.
+  option_combination_code String
+  
+  /// Available stock quantity for this option combination.
+  stock_quantity Int
+  
+  /// Inventory record creation time.
+  created_at DateTime
+  
+  /// Last update timestamp of the inventory record.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp for soft delete.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  sale shopping_mall_sales @relation(fields: [shopping_mall_sale_id], references: [id], onDelete: Cascade)
+  
+  shopping_mall_inventory_audit shopping_mall_inventory_audit[]
+  
+  @@unique([shopping_mall_sale_id, option_combination_code], map: "shopping_mall_inventory_shopping_mall_sale_id_option_c_6df7cb2e")
+}
+
+/// Primary business entity representing product categories within the
+/// shopping mall. Supports hierarchical categorization and active status
+/// management.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique category code.
+  code String
+  
+  /// Category name.
+  name String
+  
+  /// Category status such as active or inactive.
+  status String
+  
+  /// Optional category description.
+  description String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  shopping_mall_channel_categories shopping_mall_channel_categories[]
+  shopping_mall_category_relations_of_parent_shopping_ma_620049f0 shopping_mall_category_relations[] @relation("shopping_mall_category_relations_of_parent_shopping_ma_620049f0")
+  shopping_mall_category_relations_of_child_shopping_mal_dfcfc5f4 shopping_mall_category_relations[] @relation("shopping_mall_category_relations_of_child_shopping_mal_dfcfc5f4")
+  shopping_mall_inquiries shopping_mall_inquiries[]
+  shopping_mall_reviews shopping_mall_reviews[]
+  
+  @@unique([code])
+  @@index([status])
+}
+
+/// Subsidiary junction table representing relationships among product
+/// categories forming a hierarchy or multiple parent-child links.
+///
+/// @namespace Sales
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model shopping_mall_category_relations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent category {@link shopping_mall_categories.id}.
+  parent_shopping_mall_category_id String
+  
+  /// Child category {@link shopping_mall_categories.id}.
+  child_shopping_mall_category_id String
+  
+  /// Relation establishment timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  parentCategory shopping_mall_categories @relation("shopping_mall_category_relations_of_parent_shopping_ma_620049f0", fields: [parent_shopping_mall_category_id], references: [id], onDelete: Cascade)
+  childCategory shopping_mall_categories @relation("shopping_mall_category_relations_of_child_shopping_mal_dfcfc5f4", fields: [child_shopping_mall_category_id], references: [id], onDelete: Cascade)
+  
+  @@index([child_shopping_mall_category_id], map: "shopping_mall_category_relations_child_shopping_mall_c_0449cd44")
+  
+  @@unique([parent_shopping_mall_category_id, child_shopping_mall_category_id], map: "shopping_mall_category_relations_parent_shopping_mall__fad92b93")
+}
